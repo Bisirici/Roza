@@ -1,7 +1,7 @@
 // Ağ-öncelikli (network-first) servis çalışanı — oyunu internetsiz açılabilir yapar,
 // ama internet varken her zaman güncel dosyaları gösterir (cache-first'in aksine).
 // Dosyalar değiştiğinde CACHE_NAME'i artırmayı unutma; eski istemcilerin önbelleği böyle temizlenir.
-const CACHE_NAME = 'roza-oyun-v2';
+const CACHE_NAME = 'roza-oyun-v3';
 const CORE_ASSETS = [
     './',
     './index.html',

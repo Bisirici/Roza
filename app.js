@@ -324,40 +324,48 @@ function checkAnswer(selectedIndex, btnElement) {
 
     disableOptions();
 
-    if (isCorrect) {
-        btnElement.classList.add('correct');
-        streak++;
-        maxStreak = Math.max(maxStreak, streak);
-        correctCount++;
-        const streakBonus = Math.min((streak - 1) * 2, 10);
-        score += 10 + streakBonus;
-        gameUI.score.textContent = score;
-        updateStreakUI();
+    // Ses/konfeti/animasyon gibi yan etkiler try/finally içinde: biri hata verse
+    // bile (örn. bazı telefonlarda Web Audio tuhaflıkları) oyun asla ekranda
+    // takılı kalmaz, bir sonraki soruya geçiş her zaman planlanır.
+    try {
+        if (isCorrect) {
+            btnElement.classList.add('correct');
+            streak++;
+            maxStreak = Math.max(maxStreak, streak);
+            correctCount++;
+            const streakBonus = Math.min((streak - 1) * 2, 10);
+            score += 10 + streakBonus;
+            gameUI.score.textContent = score;
+            updateStreakUI();
 
-        if (streak >= 2) {
-            AudioEngine.playStreakSound();
-            showFeedback(getRandomStreakMessage());
+            if (streak >= 2) {
+                AudioEngine.playStreakSound();
+                showFeedback(getRandomStreakMessage());
+            } else {
+                AudioEngine.playCorrectSound();
+                showFeedback(getRandomMessage());
+            }
+            triggerConfetti();
         } else {
-            AudioEngine.playCorrectSound();
-            showFeedback(getRandomMessage());
+            btnElement.classList.add('incorrect');
+            // Highlight correct answer
+            const correctBtn = gameUI.optionsContainer.children[currentQ.answer];
+            if (correctBtn) correctBtn.classList.add('correct');
+            streak = 0;
+            updateStreakUI();
+            AudioEngine.playIncorrectSound();
+            screens.game.classList.add('shake');
+            setTimeout(() => screens.game.classList.remove('shake'), 500);
         }
-        triggerConfetti();
-    } else {
-        btnElement.classList.add('incorrect');
-        // Highlight correct answer
-        gameUI.optionsContainer.children[currentQ.answer].classList.add('correct');
-        streak = 0;
-        updateStreakUI();
-        AudioEngine.playIncorrectSound();
-        screens.game.classList.add('shake');
-        setTimeout(() => screens.game.classList.remove('shake'), 500);
+    } catch (e) {
+        console.warn('checkAnswer yan etki hatası (yoksayıldı):', e);
+    } finally {
+        setTimeout(() => {
+            if (myToken !== gameToken) return; // user left the game screen, abort
+            currentQuestionIndex++;
+            loadQuestion();
+        }, 2000); // 2 second delay before next question
     }
-
-    setTimeout(() => {
-        if (myToken !== gameToken) return; // user left the game screen, abort
-        currentQuestionIndex++;
-        loadQuestion();
-    }, 2000); // 2 second delay before next question
 }
 
 function showFeedback(message) {
@@ -435,22 +443,28 @@ function updateTimerUI() {
 function handleTimeOut() {
     const myToken = gameToken;
     disableOptions(); // prevent a late click racing with the next-question timer
-    AudioEngine.playIncorrectSound();
-    screens.game.classList.add('shake');
-    setTimeout(() => screens.game.classList.remove('shake'), 500);
 
-    streak = 0;
-    updateStreakUI();
+    try {
+        AudioEngine.playIncorrectSound();
+        screens.game.classList.add('shake');
+        setTimeout(() => screens.game.classList.remove('shake'), 500);
 
-    // Show correct answer
-    const currentQ = currentRoundQuestions[currentQuestionIndex];
-    gameUI.optionsContainer.children[currentQ.answer].classList.add('correct');
+        streak = 0;
+        updateStreakUI();
 
-    setTimeout(() => {
-        if (myToken !== gameToken) return; // user left the game screen, abort
-        currentQuestionIndex++;
-        loadQuestion();
-    }, 2000);
+        // Show correct answer
+        const currentQ = currentRoundQuestions[currentQuestionIndex];
+        const correctBtn = gameUI.optionsContainer.children[currentQ.answer];
+        if (correctBtn) correctBtn.classList.add('correct');
+    } catch (e) {
+        console.warn('handleTimeOut yan etki hatası (yoksayıldı):', e);
+    } finally {
+        setTimeout(() => {
+            if (myToken !== gameToken) return; // user left the game screen, abort
+            currentQuestionIndex++;
+            loadQuestion();
+        }, 2000);
+    }
 }
 
 // Round Results
@@ -542,30 +556,41 @@ function toggleMute() {
 
 // Confetti Effect
 function triggerConfetti() {
-    if (typeof confetti === 'function') {
+    // CDN'den gelen confetti kütüphanesi engellenmiş/bozuksa bile oyun asla
+    // burada takılıp kalmasın diye tamamı try/catch ile korunuyor.
+    try {
+        if (typeof confetti !== 'function') return;
+
         const duration = 1500;
         const end = Date.now() + duration;
 
         (function frame() {
-            confetti({
-                particleCount: 5,
-                angle: 60,
-                spread: 55,
-                origin: { x: 0 },
-                colors: ['#ff2a85', '#8b5cf6', '#10b981', '#fcd34d']
-            });
-            confetti({
-                particleCount: 5,
-                angle: 120,
-                spread: 55,
-                origin: { x: 1 },
-                colors: ['#ff2a85', '#8b5cf6', '#10b981', '#fcd34d']
-            });
+            try {
+                confetti({
+                    particleCount: 5,
+                    angle: 60,
+                    spread: 55,
+                    origin: { x: 0 },
+                    colors: ['#ff2a85', '#8b5cf6', '#10b981', '#fcd34d']
+                });
+                confetti({
+                    particleCount: 5,
+                    angle: 120,
+                    spread: 55,
+                    origin: { x: 1 },
+                    colors: ['#ff2a85', '#8b5cf6', '#10b981', '#fcd34d']
+                });
+            } catch (e) {
+                console.warn('Konfeti hatası (yoksayıldı):', e);
+                return;
+            }
 
             if (Date.now() < end) {
                 requestAnimationFrame(frame);
             }
         }());
+    } catch (e) {
+        console.warn('Konfeti hatası (yoksayıldı):', e);
     }
 }
 
