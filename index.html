@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Roza'nın Oyun Dünyası 👑</title>
+
+    <!-- PWA -->
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#ff2a85">
+    <link rel="icon" href="icons/favicon-32.png" sizes="32x32" type="image/png">
+    <link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="Roza Oyun">
+
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;600;800&family=Poppins:wght@400;600;700&display=swap" rel="stylesheet">
+
+    <!-- Custom CSS -->
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+    <!-- Background Elements for Glassmorphism -->
+    <div class="blob blob-1"></div>
+    <div class="blob blob-2"></div>
+    <div class="blob blob-3"></div>
+
+    <!-- Global Controls -->
+    <div class="global-controls">
+        <button id="home-btn" class="icon-btn hidden" aria-label="Ana Menüye Dön">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path><polyline points="9 22 9 12 15 12 15 22"></polyline></svg>
+        </button>
+        <button id="badges-btn" class="icon-btn" aria-label="Rozetlerim">🏅</button>
+        <div class="volume-container">
+            <input type="range" id="volume-slider" min="0" max="0.5" step="0.01" value="0.15" aria-label="Müzik Sesi" title="Müzik Sesi">
+        </div>
+        <button id="mute-btn" class="icon-btn" aria-label="Sesi Kapat/Aç">
+            <svg id="icon-unmute" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon><path d="M15.54 8.46a5 5 0 0 1 0 7.07"></path><path d="M19.07 4.93a10 10 0 0 1 0 14.14"></path></svg>
+            <svg id="icon-mute" class="hidden" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon><line x1="23" y1="9" x2="17" y2="15"></line><line x1="17" y1="9" x2="23" y2="15"></line></svg>
+        </button>
+    </div>
+
+    <div class="app-container">
+        
+        <!-- MAIN MENU SCREEN -->
+        <div id="main-menu" class="screen active">
+            <header class="menu-header">
+                <div class="crown-icon">👑</div>
+                <h1>Roza'nın Oyun Dünyası</h1>
+                <p>Oynamak istediğin konuyu seç bakalım!</p>
+            </header>
+
+            <div class="categories-grid" id="categories-container">
+                <!-- Categories will be injected here via JS -->
+            </div>
+        </div>
+
+        <!-- GAME SCREEN -->
+        <div id="game-screen" class="screen hidden">
+            <header class="game-header">
+                <div class="category-badge" id="current-category-badge">Kategori</div>
+                <div class="score-board">
+                    <span>Skor: <strong id="current-score">0</strong></span>
+                </div>
+            </header>
+
+            <div class="progress-bar-container">
+                <div class="progress-bar-fill" id="progress-bar-fill"></div>
+            </div>
+            <div class="progress-label" id="progress-label">Soru 1/10</div>
+
+            <div class="timer-container">
+                <svg class="circular-timer" viewBox="0 0 100 100">
+                    <circle class="timer-bg" cx="50" cy="50" r="45"></circle>
+                    <circle class="timer-path" cx="50" cy="50" r="45" id="timer-path"></circle>
+                </svg>
+                <div class="timer-text" id="timer-text">20</div>
+                <button id="joker-btn" class="joker-btn" title="50/50 Jokeri: 2 yanlış şıkkı eler">🃏</button>
+                <div class="streak-badge hidden" id="streak-badge">🔥 <span id="streak-count">0</span></div>
+            </div>
+
+            <div class="question-container glass-panel">
+                <h2 id="question-text">Soru buraya gelecek?</h2>
+            </div>
+
+            <div class="options-grid" id="options-container">
+                <!-- Options injected via JS -->
+            </div>
+
+            <!-- Feedback Overlay (Roza'ya özel mesajlar için) -->
+            <div id="feedback-overlay" class="feedback-overlay hidden">
+                <h3 id="feedback-message">Aferin!</h3>
+            </div>
+        </div>
+
+        <!-- RESULT SCREEN -->
+        <div id="result-screen" class="screen hidden">
+            <div class="result-content glass-panel">
+                <div class="result-icon" id="result-icon">👑</div>
+                <h2 id="result-title">Tebrikler Roza!</h2>
+                <div class="stars-row" id="stars-row">
+                    <span class="star" id="star-1">★</span>
+                    <span class="star" id="star-2">★</span>
+                    <span class="star" id="star-3">★</span>
+                </div>
+                <p class="result-message" id="result-message">Harika gidiyorsun!</p>
+                <div class="result-score">
+                    <span>Skor</span>
+                    <strong id="result-score-value">0</strong>
+                </div>
+                <div class="new-record-badge hidden" id="new-record-badge">🏆 Yeni Rekor!</div>
+                <div class="new-badges-row hidden" id="new-badges-row"></div>
+                <div class="result-actions">
+                    <button class="primary-btn" id="play-again-btn">Tekrar Oyna</button>
+                    <button class="secondary-btn" id="result-home-btn">Ana Menü</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- BADGES SCREEN -->
+        <div id="badges-screen" class="screen hidden">
+            <header class="menu-header">
+                <div class="crown-icon">🏅</div>
+                <h1>Rozetlerim</h1>
+                <p>Kazandığın başarımlar burada!</p>
+            </header>
+
+            <div class="badges-grid" id="badges-container">
+                <!-- Badges injected via JS -->
+            </div>
+
+            <button class="secondary-btn back-btn" id="badges-back-btn">Ana Menüye Dön</button>
+        </div>
+
+    </div>
+
+    <!-- Scripts -->
+    <!-- Canvas Confetti CDN -->
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+    
+    <!-- Application Logic -->
+    <script src="questions.js"></script>
+    <script src="messages.js"></script>
+    <script src="audio-engine.js"></script>
+    <script src="achievements.js"></script>
+    <script src="app.js"></script>
+</body>
+</html>
